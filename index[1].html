@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>جمعية النور أولاد بن علال - نظام فواتير الماء</title>
+<style>
+:root {
+  --gold: #ffd700;
+  --overlay: rgba(0,0,0,0.7);
+  --card: rgba(30,30,30,0.95);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+  background: url('background.jpg') no-repeat center center fixed;
+  background-size: cover; color:#fff;
+}
+.overlay{
+  background:var(--overlay); min-height:100vh; padding:20px;
+}
+.header{
+  background: linear-gradient(45deg,var(--gold),#e6c200); color:#111;
+  padding:12px; border-radius:10px; text-align:center; box-shadow:0 6px 18px rgba(0,0,0,0.4);
+  margin-bottom:14px;
+}
+.header img{width:90px;border-radius:8px;display:block;margin:6px auto;}
+.header h1{margin:6px 0 0;font-size:20px;}
+.header p{margin:6px 0 0;color:#222;font-size:14px;}
+.card{background:var(--card); padding:14px; border-radius:10px; margin-bottom:12px; box-shadow:0 8px 22px rgba(0,0,0,0.6);}
+button{background:linear-gradient(45deg,var(--gold),#e6c200);border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:700;margin:6px 4px;}
+button:hover{transform:translateY(-2px)}
+.page{display:none}
+.page.active{display:block}
+input,select{width:100%;padding:10px;margin:8px 0;border-radius:8px;border:1px solid #444;background:#111;color:#fff}
+.month-item{background:#007bff;color:#fff;border-radius:8px;padding:10px;margin:8px 0;display:flex;justify-content:space-between;align-items:center}
+.controls{display:flex;gap:8px}
+.small-btn{padding:6px 8px;border-radius:6px;border:none;cursor:pointer;font-weight:700}
+.remove{background:#e74c3c;color:#fff}
+.edit{background:#f39c12;color:#111}
+.print{background:#27ae60;color:#fff}
+.welcome{font-size:1.1rem;color:var(--gold);text-shadow:1px 1px 3px #000;margin-top:10px}
+.footer{opacity:0.85;text-align:center;margin-top:12px;font-size:13px}
+@media(max-width:600px){
+  .header h1{font-size:18px}
+  .header img{width:70px}
+  button{width:100%}
+}
+</style>
+</head>
+<body>
+<div class="overlay">
+  <div class="header">
+    <img src="logo.jpg" alt="شعار الجمعية">
+    <h1>💧 جمعية النور أولاد بن علال للتنمية والتعاون - مرس الحجر</h1>
+    <p class="welcome">مرحبًا بكم في نظام إدارة فواتير جمعية النور أولاد بن علال للتنمية والتعاون مرس الحجر</p>
+  </div>
+
+  <div class="card" style="text-align:center">
+    <button onclick="showPage('home')">الرئيسية</button>
+    <button onclick="showPage('login')">تسجيل الدخول</button>
+  </div>
+
+  <div id="home" class="page active card" style="text-align:center">
+    <h2>🌿 نظام فواتير المياه العصري</h2>
+    <p class="welcome">مرحبًا بكم في منصة جمعية النور لإدارة فواتير الماء بطريقة حديثة وسهلة</p>
+  </div>
+
+  <div id="login" class="page card">
+    <h3>تسجيل الدخول</h3>
+    <label>نوع الدخول:</label>
+    <select id="userType">
+      <option value="customer">مشترك</option>
+      <option value="admin">مدير</option>
+    </select>
+    <label>كلمة المرور / كود المشترك</label>
+    <input type="password" id="password" placeholder="أدخل كلمة المرور أو كود المشترك" />
+    <button onclick="login()">دخول</button>
+  </div>
+
+  <!-- Admin dashboard -->
+  <div id="admin-dashboard" class="page">
+    <div class="card">
+      <h3 style="margin-top:0">لوحة تحكم المدير</h3>
+      <button onclick="logout()">🚪 خروج</button>
+      <button onclick="exportToExcel()">💾 تصدير Excel</button>
+    </div>
+
+    <div class="card">
+      <h4 style="margin-top:0">➕ إضافة مشترك جديد</h4>
+      <input type="text" id="newCustomerName" placeholder="اسم المشترك" />
+      <input type="text" id="newCustomerCode" placeholder="كود المشترك" />
+      <button onclick="addCustomer()">إضافة المشترك</button>
+    </div>
+
+    <div class="card">
+      <h4 style="margin-top:0">📋 قائمة المشتركين</h4>
+      <div id="customerList"></div>
+    </div>
+
+    <div class="card">
+      <h4 style="margin-top:0">📊 إدارة فواتير المشترك</h4>
+      <select id="selectedCustomer" onchange="renderMonths()">
+        <option value="">اختر مشترك</option>
+      </select>
+      <input type="number" id="monthConsumption" placeholder="الاستهلاك بالمتر³" />
+      <button onclick="addMonth()">إضافة فاتورة</button>
+      <div id="monthList"></div>
+    </div>
+  </div>
+
+  <!-- Customer dashboard (read-only) -->
+  <div id="customer-dashboard" class="page card">
+    <h3>مرحبًا <span id="customerNameDisplay"></span></h3>
+    <button onclick="logout()">🚪 خروج</button>
+    <h4>💵 فواتيرك</h4>
+    <div id="customerMonths"></div>
+  </div>
+
+  <div class="footer">© <span id="year"></span> جمعية النور أولاد بن علال للتنمية والتعاون</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script>
+const adminPassword = "236263";
+let customers = JSON.parse(localStorage.getItem('customersData') || '[]');
+document.getElementById('year').innerText = new Date().getFullYear();
+
+function saveData(){ localStorage.setItem('customersData', JSON.stringify(customers)); }
+function showPage(id){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+
+function login(){
+  const type = document.getElementById('userType').value;
+  const pass = document.getElementById('password').value.trim();
+  if(type === 'admin'){
+    if(pass === adminPassword){ showPage('admin-dashboard'); renderCustomers(); }
+    else alert('كلمة مرور المدير خاطئة');
+  } else {
+    const user = customers.find(c => c.code === pass);
+    if(user){ showPage('customer-dashboard'); document.getElementById('customerNameDisplay').innerText = user.name; renderCustomerMonths(user); }
+    else alert('كود المشترك غير صحيح');
+  }
+}
+
+function logout(){ showPage('login'); }
+
+// Admin functions
+function addCustomer(){
+  const name = document.getElementById('newCustomerName').value.trim();
+  const code = document.getElementById('newCustomerCode').value.trim();
+  if(!name || !code){ alert('يرجى إدخال الاسم والكود'); return; }
+  customers.push({ name, code, months: [] });
+  saveData(); document.getElementById('newCustomerName').value=''; document.getElementById('newCustomerCode').value='';
+  renderCustomers(); alert('✅ تم إضافة المشترك');
+}
+
+function renderCustomers(){
+  const listDiv = document.getElementById('customerList');
+  const select = document.getElementById('selectedCustomer');
+  listDiv.innerHTML = ''; select.innerHTML = '<option value="">اختر مشترك</option>';
+  customers.forEach((c,i) => {
+    listDiv.innerHTML += `<p>${i+1}. ${c.name} <button style="background:#e74c3c;color:#fff" onclick="removeCustomer(${i})">حذف</button></p>`;
+    select.innerHTML += `<option value="${i}">${c.name}</option>`;
+  });
+  renderMonths();
+}
+
+function removeCustomer(i){
+  if(confirm('هل تريد حذف هذا المشترك؟')){ customers.splice(i,1); saveData(); renderCustomers(); document.getElementById('monthList').innerHTML=''; }
+}
+
+function addMonth(){
+  const idx = document.getElementById('selectedCustomer').value;
+  const cons = parseFloat(document.getElementById('monthConsumption').value);
+  if(idx === '' || !cons || cons <= 0){ alert('اختر مشترك وأدخل استهلاك صالح'); return; }
+  customers[idx].months.push({ consumption: cons });
+  saveData(); document.getElementById('monthConsumption').value=''; renderMonths();
+}
+
+function renderMonths(){
+  const idx = document.getElementById('selectedCustomer').value;
+  const monthList = document.getElementById('monthList');
+  monthList.innerHTML = '';
+  if(idx === '') return;
+  customers[idx].months.forEach((m,i) => {
+    monthList.innerHTML += `<div class="month-item"><span>شهر ${i+1}: ${m.consumption} م³ = ${m.consumption*3} درهم</span>
+      <div class="controls">
+        <button class="small-btn edit" onclick="editMonth(${idx},${i})">✏️</button>
+        <button class="small-btn print" onclick="printInvoice(${idx},${i})">🖨️</button>
+        <button class="small-btn remove" onclick="removeMonth(${idx},${i})">×</button>
+      </div></div>`;
+  });
+}
+function removeMonth(cIdx,mIdx){ if(confirm('هل تريد حذف هذه الفاتورة؟')){ customers[cIdx].months.splice(mIdx,1); saveData(); renderMonths(); } }
+
+function editMonth(cIdx,mIdx){
+  const current = customers[cIdx].months[mIdx].consumption;
+  const newVal = prompt('أدخل القيمة الجديدة للاستهلاك بالمتر³:', current);
+  if(newVal !== null){ const n = parseFloat(newVal); if(!isNaN(n) && n>0){ customers[cIdx].months[mIdx].consumption = n; saveData(); renderMonths(); alert('✅ تم تعديل الفاتورة'); } else alert('قيمة غير صالحة'); }
+}
+
+function renderCustomerMonths(user){
+  const div = document.getElementById('customerMonths'); div.innerHTML=''; if(!user.months || user.months.length===0){ div.innerHTML='<p>لا توجد فواتير بعد.</p>'; return; } user.months.forEach((m,i)=>{ div.innerHTML += `<div class="month-item"><span>شهر ${i+1}: ${m.consumption} م³ = ${m.consumption*3} درهم</span></div>`; }); }
+
+function printInvoice(cIdx,mIdx){
+  const customer = customers[cIdx]; const invoice = customer.months[mIdx]; const amount = (invoice.consumption * 3).toFixed(2); const dateStr = new Date().toLocaleDateString('ar-MA'); const popup = window.open('', '_blank', 'width=700,height=800'); popup.document.write(`
+    <html dir="rtl"><head><title>فاتورة - ${customer.name}</title></head><body style="font-family:Tahoma;padding:20px;text-align:center;">
+    <img src="logo.jpg" style="width:100px"><h2>جمعية النور أولاد بن علال للتنمية و التعاون</h2><h3>فاتورة استهلاك الماء</h3><hr>
+    <p><b>اسم المشترك:</b> ${customer.name}</p>
+    <p><b>كود المشترك:</b> ${customer.code}</p>
+    <p><b>الشهر:</b> ${mIdx+1}</p>
+    <p><b>الاستهلاك:</b> ${invoice.consumption} م³</p>
+    <p><b>المبلغ:</b> ${amount} درهم</p><hr>
+    <p>تاريخ الطباعة: ${dateStr}</p></body></html>`);
+  popup.print(); }
+
+function exportToExcel(){
+  if(customers.length === 0){ alert('لا توجد بيانات للتصدير'); return; }
+  const today = new Date(); const dateStr = today.toISOString().slice(0,10); const rows = [['اسم المشترك','كود','الشهر','الاستهلاك (م³)','المبلغ (درهم)']]; customers.forEach(c => { if(!c.months || c.months.length === 0) rows.push([c.name,c.code,'-','-','-']); else c.months.forEach((m,i) => rows.push([c.name,c.code,`شهر ${i+1}`, m.consumption, m.consumption*3])); }); const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(rows); XLSX.utils.book_append_sheet(wb,ws,'فواتير'); XLSX.writeFile(wb, `فواتير_جمعية_النور_${dateStr}.xlsx`); alert('✅ تم التصدير بنجاح'); }
+
+</script>
+</body>
+</html>
